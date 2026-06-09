@@ -52,7 +52,7 @@ zikh execute ~/Pictures ~/archive
 ### Linux (x86_64)
 
 ```sh
-curl -L https://codeberg.org/duras/zikh/releases/latest/download/zikh-linux-amd64 \
+curl -L https://codeberg.org/duras/zikh/releases/download/v0.1.0/zikh-linux-amd64 \
   -o ~/.local/bin/zikh && chmod +x ~/.local/bin/zikh
 ```
 
@@ -60,25 +60,31 @@ Or with wget:
 
 ```sh
 wget -O ~/.local/bin/zikh \
-  https://codeberg.org/duras/zikh/releases/latest/download/zikh-linux-amd64 \
+  https://codeberg.org/duras/zikh/releases/download/v0.1.0/zikh-linux-amd64 \
   && chmod +x ~/.local/bin/zikh
 ```
 
 `~/.local/bin` must be in your `PATH`. On most Linux distributions it is added
 automatically if the directory exists. If not: `export PATH="$HOME/.local/bin:$PATH"`.
 
+### Linux (ARM64)
+
+```sh
+curl -L https://codeberg.org/duras/zikh/releases/download/v0.1.0/zikh-linux-arm64 \
+  -o ~/.local/bin/zikh && chmod +x ~/.local/bin/zikh
+```
 
 ### macOS (Apple Silicon)
 
 ```sh
-curl -L https://codeberg.org/duras/zikh/releases/latest/download/zikh-macos-arm64 \
+curl -L https://codeberg.org/duras/zikh/releases/download/v0.1.0/zikh-macos-arm64 \
   -o /usr/local/bin/zikh && chmod +x /usr/local/bin/zikh
 ```
 
 ### macOS (Intel)
 
 ```sh
-curl -L https://codeberg.org/duras/zikh/releases/latest/download/zikh-macos-amd64 \
+curl -L https://codeberg.org/duras/zikh/releases/download/v0.1.0/zikh-macos-amd64 \
   -o /usr/local/bin/zikh && chmod +x /usr/local/bin/zikh
 ```
 
