@@ -67,12 +67,6 @@ wget -O ~/.local/bin/zikh \
 `~/.local/bin` must be in your `PATH`. On most Linux distributions it is added
 automatically if the directory exists. If not: `export PATH="$HOME/.local/bin:$PATH"`.
 
-### Linux (ARM64)
-
-```sh
-curl -L https://codeberg.org/duras/zikh/releases/latest/download/zikh-linux-arm64 \
-  -o ~/.local/bin/zikh && chmod +x ~/.local/bin/zikh
-```
 
 ### macOS (Apple Silicon)
 
