@@ -1,4 +1,7 @@
-# ---> OCaml
+# ------------------------------------------------------------------ #
+# OCaml                                                               #
+# ------------------------------------------------------------------ #
+
 *.annot
 *.cmo
 *.cma
@@ -8,31 +11,50 @@
 *.cmx
 *.cmxs
 *.cmxa
-
-# Files containing detailed information about the compilation (generated
-# by `ocamlc`/`ocamlopt` when invoked using the option `-bin-annot`).
-# These files are typically useful for code inspection tools
-# (e.g. Merlin).
 *.cmt
 *.cmti
-
-# ocamlbuild and Dune default working directory
-_build/
-
-# ocamlbuild targets
 *.byte
 *.native
-
-# oasis generated files
+_build/
+*.install
+_opam/
+.merlin
 setup.data
 setup.log
 
-# Merlin configuring file for Vim and Emacs
-.merlin
+# ------------------------------------------------------------------ #
+# Project — distribution binaries                                     #
+# ------------------------------------------------------------------ #
 
-# Dune generated files
-*.install
+zikh-linux-amd64
+zikh-macos-amd64
+zikh-macos-arm64
 
-# Local OPAM switch
-_opam/
+# ------------------------------------------------------------------ #
+# Project — runtime artifacts                                         #
+# ------------------------------------------------------------------ #
 
+.zikh_tmp_*
+
+# ------------------------------------------------------------------ #
+# Project — work docs                                                 #
+# ------------------------------------------------------------------ #
+
+docs/
+docs/*
+
+# ------------------------------------------------------------------ #
+# Editor                                                              #
+# ------------------------------------------------------------------ #
+
+*.swp
+*.swo
+.*.swp
+.*.swo
+*~
+
+# ------------------------------------------------------------------ #
+# OS — macOS                                                          #
+# ------------------------------------------------------------------ #
+
+.DS_Store
