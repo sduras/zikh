@@ -4,11 +4,11 @@
 
 open Types
 
-
 let supported_extensions = [".jpg"; ".jpeg"; ".heic"; ".png"; ".tiff"; ".tif"]
 
 let is_supported ext =
   List.mem (String.lowercase_ascii ext) supported_extensions
+
 
 let parse_timestamp s =
   if String.length s <> 19 then None
@@ -39,6 +39,10 @@ let select_timestamp dto cd =
   | Some _ as ts -> ts
   | None         -> parse_opt cd
 
+let path_exists path =
+  match Unix.lstat path with
+  | _                                              -> true
+  | exception Unix.Unix_error (Unix.ENOENT, _, _) -> false
 
 let resolve ~claimed ~existing dir base ext =
   let candidate n =
@@ -50,13 +54,14 @@ let resolve ~claimed ~existing dir base ext =
   in
   let rec loop n =
     let c = candidate n in
-    if Hashtbl.mem claimed c || Hashtbl.mem existing c
+    if Hashtbl.mem claimed c || Hashtbl.mem existing c || path_exists c
     then loop (n + 1)
     else c
   in
   let path = loop 0 in
   Hashtbl.replace claimed path ();
   path
+
 
 let make_plan ~sources ~metadata ~dest_root ~existing =
   let claimed      = Hashtbl.create 64 in
