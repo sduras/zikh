@@ -1,0 +1,7 @@
+; zikh — a stateless, non-destructive photo organizer.
+; SPDX-License-Identifier: ISC
+; tests/dune — test build configuration.
+
+(tests
+ (names test_planning test_validation test_integration)
+ (libraries zikh alcotest unix))

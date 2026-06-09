@@ -1,0 +1,30 @@
+opam-version: "2.0"
+name:         "zikh"
+version:      "0.1.0"
+synopsis:     "Non-destructive photo organizer"
+description:  """
+zikh discovers photos in a source directory, extracts capture timestamps
+from embedded EXIF metadata, and moves them into a date-organized hierarchy.
+
+No file is moved or deleted until a complete plan has been generated and
+validated. No existing file is ever overwritten. Running zikh twice on the
+same source produces no changes on the second run.
+
+No external dependencies. EXIF parsing is native OCaml.
+"""
+maintainer:   "Sergiy Duras <sergiy@duras.org>"
+authors:      ["Sergiy Duras <sergiy@duras.org>"]
+license:      "ISC"
+homepage:     "https://codeberg.org/duras/zikh"
+bug-reports:  "https://codeberg.org/duras/zikh/issues"
+dev-repo:     "git+https://codeberg.org/duras/zikh.git"
+depends: [
+  "ocaml" {>= "4.08"}
+  "dune"  {>= "3.0"}
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]
+install: [
+  ["dune" "install" "-p" name]
+]

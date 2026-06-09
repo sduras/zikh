@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-linux-amd64:
+    name: Linux x86_64
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: '5.2'
+
+      - name: Build
+        run: |
+          opam install dune -y
+          opam exec -- dune build
+          cp _build/default/bin/main.exe zikh-linux-amd64
+          chmod +w zikh-linux-amd64 && strip zikh-linux-amd64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zikh-linux-amd64
+          path: zikh-linux-amd64
+
+  build-macos-amd64:
+    name: macOS Intel
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: '5.2'
+
+      - name: Build
+        run: |
+          opam install dune -y
+          opam exec -- dune build
+          cp _build/default/bin/main.exe zikh-macos-amd64
+          chmod +w zikh-macos-amd64 && strip zikh-macos-amd64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zikh-macos-amd64
+          path: zikh-macos-amd64
+
+  build-macos-arm64:
+    name: macOS Apple Silicon
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: '5.2'
+
+      - name: Build
+        run: |
+          opam install dune -y
+          opam exec -- dune build
+          cp _build/default/bin/main.exe zikh-macos-arm64
+          chmod +w zikh-macos-arm64 && strip zikh-macos-arm64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zikh-macos-arm64
+          path: zikh-macos-arm64
+
+  release:
+    name: Create GitHub Release
+    needs: [build-linux-amd64, build-macos-amd64, build-macos-arm64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: false
+          files: |
+            zikh-linux-amd64/zikh-linux-amd64
+            zikh-macos-amd64/zikh-macos-amd64
+            zikh-macos-arm64/zikh-macos-arm64

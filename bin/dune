@@ -1,0 +1,8 @@
+; zikh — a stateless, non-destructive photo organizer.
+; SPDX-License-Identifier: ISC
+; bin/dune — executable build configuration.
+
+(executable
+ (name main)
+ (public_name zikh)
+ (libraries zikh unix))

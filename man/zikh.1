@@ -1,0 +1,326 @@
+.Dd June 1, 2026
+.Dt ZIKH 1
+.Os
+.Sh NAME
+.Nm zikh
+.Nd non-destructive photo organizer
+.Sh SYNOPSIS
+.Nm
+.Cm plan
+.Op Fl v
+.Op Fl \-json
+.Ar source dest
+.Nm
+.Cm execute
+.Op Fl v
+.Op Fl \-json
+.Ar source dest
+.Sh DESCRIPTION
+.Nm
+discovers photos in
+.Ar source ,
+extracts capture timestamps from embedded EXIF metadata,
+and moves them into a date-organized hierarchy under
+.Ar dest .
+.Pp
+Processing runs in five phases:
+discovery, metadata extraction, planning, validation, and execution.
+The first four phases make no filesystem changes.
+No file is moved or deleted until the complete plan has been validated.
+.Pp
+.Ar source
+is traversed recursively.
+Symbolic links are not followed and not collected.
+.Ar dest
+need not exist before
+.Cm execute
+is run; it is created on demand.
+.Pp
+The following invariants hold across all runs:
+.Bl -bullet -compact
+.It
+No existing file at a destination path is overwritten or deleted.
+.It
+Source files are removed only after their destination is confirmed written.
+.It
+EXIF metadata is never written back to files.
+.It
+Running
+.Nm
+a second time after a successful first run produces no changes.
+.El
+.Pp
+Supported extensions:
+.Li .jpg ,
+.Li .jpeg ,
+.Li .heic ,
+.Li .png ,
+.Li .tiff ,
+.Li .tif .
+Extension matching is case-insensitive.
+Files with other extensions are skipped without error.
+.Pp
+The destination filesystem must support
+.Xr link 2 .
+Filesystems without hardlink support, such as FAT and exFAT,
+are not supported as destinations.
+.Sh SUBCOMMANDS
+.Bl -tag -width execute
+.It Cm plan
+Run phases one through four.
+Print all planned operations to stdout.
+Make no filesystem changes.
+.It Cm execute
+Run all five phases.
+Apply the plan.
+Print a summary to stderr on completion.
+.El
+.Sh OPTIONS
+.Bl -tag -width "--json"
+.It Fl v
+Under
+.Cm plan ,
+print the full per-file operation list after the summary and histogram.
+Under
+.Cm execute ,
+print each operation to stderr as it executes.
+Without this flag,
+.Cm plan
+shows the summary and year histogram only.
+.It Fl \-json
+Write NDJSON to stdout instead of human-readable output.
+One line per operation, followed by a summary line.
+See
+.Sx OUTPUT
+for the record format.
+Mutually exclusive with
+.Fl v .
+.It Fl \-help
+Print usage and exit 0.
+.El
+.Sh DESTINATION NAMING
+Files with a valid capture timestamp are placed at:
+.Bd -literal -offset indent
+dest/YYYY/MM/YYYY-MM-DD_HH-MM-SS_BASENAME.EXT
+.Ed
+.Pp
+.Sy YYYY ,
+.Sy MM ,
+.Sy DD ,
+.Sy HH ,
+.Sy MM ,
+.Sy SS
+are the year, month, day, hour, minute, and second from the capture timestamp,
+zero-padded.
+.Sy BASENAME
+is the original filename stem, preserved byte-for-byte.
+.Sy EXT
+is the original extension, case-preserved.
+.Pp
+Files without a usable timestamp are placed at:
+.Bd -literal -offset indent
+dest/unparsed/ORIGINAL_FILENAME
+.Ed
+.Pp
+The original filename is used in full because there is no timestamp
+to construct a meaningful name.
+.Ss Timestamp selection
+The capture timestamp is read from EXIF tag
+.Sy DateTimeOriginal
+if present and valid.
+If absent or invalid,
+.Sy CreateDate
+is used as a fallback.
+If neither is present or valid, the file is treated as unparsed.
+.Pp
+The required format is
+.Li YYYY:MM:DD HH:MM:SS
+exactly: date components separated by colons, date and time separated by a space,
+no timezone suffix.
+Year must be no less than 1970.
+Month must be in the range 1 to 12.
+Day must be in the range 1 to 31.
+Any deviation from this format is treated as absent.
+.Ss Collision resolution
+When two files would produce the same destination path, or when the computed
+destination already exists on disk,
+.Nm
+appends
+.Sy \-N
+between the filename stem and extension, where
+.Sy N
+starts at 1 and increments:
+.Bd -literal -offset indent
+2024-06-15_14-32-08_IMG_0001.jpg
+2024-06-15_14-32-08_IMG_0001-1.jpg
+2024-06-15_14-32-08_IMG_0001-2.jpg
+.Ed
+.Pp
+When multiple source files map to the same destination, suffixes are assigned
+in ascending lexicographic order of their absolute source paths.
+The file sorting first receives the base name without a suffix.
+This ordering is deterministic: identical input always produces identical output.
+.Pp
+Duplicate detection is not performed.
+Two files with identical content but different source paths are treated as
+distinct files.
+.Sh OUTPUT
+.Ss Human-readable
+Under
+.Cm plan ,
+the summary line and year histogram are written to stdout.
+With
+.Fl v ,
+the full per-file operation list follows the histogram.
+Under
+.Cm execute
+with
+.Fl v ,
+one line per operation is written to stderr as each completes.
+.Pp
+Operation line format:
+.Bd -literal -offset indent
+MOVE     /source/IMG_1234.jpg \(-> /dest/2024/06/2024-06-15_14-32-08_IMG_1234.jpg
+UNPARSED /source/scan.png \(-> /dest/unparsed/scan.png
+SKIP     /source/video.mp4
+ERROR    /source/bad.jpg  exiftool_failure: path contains newline
+.Ed
+.Pp
+A summary line follows the operation list:
+.Bd -literal -offset indent
+plan: 1 move, 1 unparsed, 1 skip, 1 error
+.Ed
+.Pp
+Under
+.Cm execute
+without
+.Fl v ,
+only the summary is printed to stderr:
+.Bd -literal -offset indent
+zikh: processed 4 files
+  moved:     1
+  unparsed:  1
+  skipped:   1
+  errors:    1
+.Ed
+.Pp
+ANSI colour is applied to terminal output when
+.Ev NO_COLOR
+is unset,
+.Ev TERM
+is set and not
+.Dq dumb ,
+and the output stream is a terminal.
+Destination paths are shown in cyan.
+Errors are shown in red.
+Piping strips colour without any flag.
+.Ss NDJSON
+With
+.Fl \-json ,
+one JSON object per line is written to stdout.
+.Pp
+Under
+.Cm plan :
+.Bd -literal -offset indent
+{"op":"move","source":"/src/a.jpg","dest":"/dst/2024/06/..."}
+{"op":"unparsed","source":"/src/s.png","dest":"/dst/unparsed/s.png"}
+{"op":"skip","source":"/src/v.mp4","reason":"unsupported_extension"}
+{"op":"error","source":"/src/b.jpg","error":"exiftool_failure","detail":"..."}
+{"summary":true,"moves":1,"unparsed":1,"skipped":1,"errors":1}
+.Ed
+.Pp
+Under
+.Cm execute ,
+each operation record gains a
+.Sy result
+field and the summary gains a
+.Sy processed
+field:
+.Bd -literal -offset indent
+{"op":"move","source":"...","dest":"...","result":"ok"}
+{"op":"error","source":"...","error":"filesystem_error","detail":"..."}
+{"summary":true,"processed":4,"moved":1,"unparsed":1,"skipped":1,"errors":1}
+.Ed
+.Sh ENVIRONMENT
+.Bl -tag -width "NO_COLOR"
+.It Ev NO_COLOR
+Disable ANSI colour output.
+Set to any value to take effect.
+.It Ev TERM
+Used to detect terminal capability for colour output.
+Colour is disabled when unset, empty, or set to
+.Dq dumb .
+.It Ev TMPDIR
+Directory for temporary files created during cross-device moves.
+Defaults to
+.Pa /tmp .
+.El
+.Sh FILES
+.Bl -tag -width "dest/.zikh_tmp_XXXXXX"
+.It Pa dest/*/.zikh_tmp_XXXXXX
+Temporary file created during cross-device moves, in the destination
+parent directory.
+Deleted after the move completes.
+On
+.Sy SIGKILL
+or hard crash, may be left in place and is safe to remove by prefix.
+.El
+.Sh EXIT STATUS
+.Bl -tag -width "64"
+.It 0
+Success, or no files to process.
+.It 1
+Partial success: at least one operation failed and at least one succeeded.
+.Cm execute
+only.
+.It 2
+Planning or validation failure.
+No filesystem changes were made.
+.It 3
+All operations failed.
+.Cm execute
+only.
+.It 64
+Bad command-line arguments.
+.It 70
+Internal error.
+.It 71
+Operating system error: unreadable directory or unreadable source file.
+.El
+.Sh EXAMPLES
+Preview what
+.Nm
+would do without making any changes:
+.Bd -literal -offset indent
+zikh plan ~/Pictures ~/archive
+.Ed
+.Pp
+Show the full per-file operation list:
+.Bd -literal -offset indent
+zikh plan -v ~/Pictures ~/archive
+.Ed
+.Pp
+Organize photos:
+.Bd -literal -offset indent
+zikh execute ~/Pictures ~/archive
+.Ed
+.Pp
+Show each move as it happens:
+.Bd -literal -offset indent
+zikh execute -v ~/Pictures ~/archive
+.Ed
+.Pp
+Find files that could not be timestamped:
+.Bd -literal -offset indent
+zikh plan --json ~/Pictures ~/archive | grep '"op":"unparsed"'
+.Ed
+.Pp
+Find errors in a planned run:
+.Bd -literal -offset indent
+zikh plan --json ~/Pictures ~/archive | grep '"op":"error"'
+.Ed
+.Sh AUTHORS
+.An Sergiy Duras Aq Mt sergiy@duras.org
+.Sh SEE ALSO
+.Xr find 1 ,
+.Xr link 2
