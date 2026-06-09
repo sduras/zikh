@@ -21,7 +21,7 @@ jobs:
       - name: Build
         run: |
           opam install dune -y
-          opam exec -- dune build
+          opam exec -- dune build bin/main.exe
           cp _build/default/bin/main.exe zikh-linux-amd64
           chmod +w zikh-linux-amd64 && strip zikh-linux-amd64
 
@@ -44,7 +44,7 @@ jobs:
       - name: Build
         run: |
           opam install dune -y
-          opam exec -- dune build
+          opam exec -- dune build bin/main.exe
           cp _build/default/bin/main.exe zikh-macos-amd64
           chmod +w zikh-macos-amd64 && strip zikh-macos-amd64
 
@@ -67,7 +67,7 @@ jobs:
       - name: Build
         run: |
           opam install dune -y
-          opam exec -- dune build
+          opam exec -- dune build bin/main.exe
           cp _build/default/bin/main.exe zikh-macos-arm64
           chmod +w zikh-macos-arm64 && strip zikh-macos-arm64
 
